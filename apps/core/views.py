@@ -1,49 +1,53 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from .models import Event
+from django.shortcuts import render
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
+from rest_framework.views import APIView
 
 
 def home(request):
-    return render(request, "core/home.html")
+    names = Event.objects.values_list("name", flat=True).distinct()
+    events = [{"name": n, "count": Event.objects.filter(name=n).count()} for n in names]
+    return render(request, "core/home.html", {"events": events})
 
 
 class EventView(APIView):
-    # GET /events/        - list all event names
-    # GET /events/{name}/ - get count for a specific event
+    renderer_classes = [JSONRenderer]
+    parser_classes = [JSONParser]
+
+    # GET /events/        - list all event names with counts
+    # GET /events/{name}/ - get count for a specific event name
     def get(self, request, name=None):
         if name is None:
-            names = list(Event.objects.values_list("name", flat=True))
-            return Response(names)
+            names = Event.objects.values_list("name", flat=True).distinct()
+            events = [{"name": n, "count": Event.objects.filter(name=n).count()} for n in names]
+            return Response(events)
         else:
-            try:
-                event = Event.objects.get(name=name)
-                return Response({"name": event.name, "count": event.count})
-            except Event.DoesNotExist:
+            count = Event.objects.filter(name=name).count()
+            if count == 0:
                 return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"name": name, "count": count})
 
-    # PUT /events/{name}/ - create event (error if already exists)
+    # PUT /events/{name}/ - create first occurrence of an event name (error if already exists)
     def put(self, request, name):
         if Event.objects.filter(name=name).exists():
             return Response({"error": "Already exists"}, status=status.HTTP_409_CONFLICT)
-        event = Event.objects.create(name=name)
-        return Response({"name": event.name, "count": event.count}, status=status.HTTP_201_CREATED)
+        Event.objects.create(name=name)
+        return Response({"name": name, "count": 1}, status=status.HTTP_201_CREATED)
 
-    # POST /events/{name}/ - increment count (error if doesn't exist)
+    # POST /events/{name}/ - add one more occurrence (error if doesn't exist)
     def post(self, request, name):
-        try:
-            event = Event.objects.get(name=name)
-            event.count += 1
-            event.save()
-            return Response({"name": event.name, "count": event.count})
-        except Event.DoesNotExist:
+        if not Event.objects.filter(name=name).exists():
             return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        Event.objects.create(name=name)
+        count = Event.objects.filter(name=name).count()
+        return Response({"name": name, "count": count})
 
-    # DELETE /events/{name}/ - delete event
+    # DELETE /events/{name}/ - delete all occurrences of an event name
     def delete(self, request, name):
-        try:
-            Event.objects.get(name=name).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Event.DoesNotExist:
+        deleted, _ = Event.objects.filter(name=name).delete()
+        if deleted == 0:
             return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)

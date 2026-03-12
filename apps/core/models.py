@@ -10,8 +10,7 @@ class TimeStampedModel(models.Model):
 
 
 class Event(TimeStampedModel):
-    name = models.CharField(max_length=255, unique=True)
-    count = models.IntegerField(default=0)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name

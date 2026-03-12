@@ -4,5 +4,14 @@
 
 {% block content %}
 <h1>Welcome to Django Events</h1>
-<p>Your project is up and running.</p>
+{% if events %}
+    {% for event in events %}
+        <p>{{ event.name }} — {{ event.count }}</p>
+    {% empty %}
+        <p>No events yet.</p>
+    {% endfor %}
+{% else %}
+    <p>No events yet.</p>
+{% endif %}
+
 {% endblock %}
