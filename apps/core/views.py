@@ -1,34 +1,41 @@
+from django.db.models import Count, Max
 from .models import Event
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
+# from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 
 
 def home(request):
-    names = Event.objects.values_list("name", flat=True).distinct()
-    events = [{"name": n, "count": Event.objects.filter(name=n).count()} for n in names]
+    # names = Event.objects.values_list("name", flat=True).distinct()
+    events = (Event.objects
+                .values("name")
+                .annotate(count=Count("id"), latest=Max("created_at"))
+                .order_by("-latest"))
     return render(request, "core/home.html", {"events": events})
 
 
 class EventView(APIView):
     renderer_classes = [JSONRenderer]
-    parser_classes = [JSONParser]
+    # parser_classes = [JSONParser]
 
     # GET /events/        - list all event names with counts
     # GET /events/{name}/ - get count for a specific event name
     def get(self, request, name=None):
         if name is None:
-            names = Event.objects.values_list("name", flat=True).distinct()
-            events = [{"name": n, "count": Event.objects.filter(name=n).count()} for n in names]
+            events = (Event.objects
+                .values("name")
+                .annotate(count=Count("id"), latest=Max("created_at"))
+                .order_by("-latest"))
             return Response(events)
         else:
-            count = Event.objects.filter(name=name).count()
+            events = Event.objects.filter(name=name)
+            count = events.count()
             if count == 0:
                 return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
-            return Response({"name": name, "count": count})
+            return Response({"name": name, "count": count, "events": list(events.values("created_at"))})
 
     # PUT /events/{name}/ - create first occurrence of an event name (error if already exists)
     def put(self, request, name):

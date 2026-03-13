@@ -5,13 +5,42 @@
 {% block content %}
 <h1>Welcome to Django Events</h1>
 {% if events %}
+<table><tr>
     {% for event in events %}
-        <p>{{ event.name }} — {{ event.count }}</p>
+        <th>
+            <table>
+                <tr><th>
+                    {{ event.name }}
+                </th></tr>
+                <tr><th>
+                    {{ event.count }}
+                </th></tr>
+                <tr><th>
+                    {{ event.latest }}
+                </th></tr>
+            </table>
+        </th>
     {% empty %}
         <p>No events yet.</p>
     {% endfor %}
+</tr></table>
 {% else %}
     <p>No events yet.</p>
 {% endif %}
+
+<input type="text" id="new_event_name" placeholder="Event name">
+<button onclick="addEvent()">Add Event</button>
+
+<script>
+function addEvent() {
+    const name = document.getElementById("new_event_name").value;
+    fetch(`/events/${name}/`, { method: "PUT" })
+        .then(r => r.json())
+        .then(data => {
+            console.log(data);
+            location.reload();
+        });
+}
+</script>
 
 {% endblock %}
