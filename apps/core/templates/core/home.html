@@ -1,46 +1,36 @@
 {% extends "base.html" %}
 
 {% block title %}Home — Django Events{% endblock %}
+{% load tz %}
 
 {% block content %}
 <h1>Welcome to Django Events</h1>
+<p>Times in America/Los_Angeles</p>
+<div class="events">
 {% if events %}
-<table><tr>
     {% for event in events %}
-        <th>
-            <table>
-                <tr><th>
-                    {{ event.name }}
-                </th></tr>
-                <tr><th>
-                    {{ event.count }}
-                </th></tr>
-                <tr><th>
-                    {{ event.latest }}
-                </th></tr>
-            </table>
-        </th>
+        <div class="oneevent">
+            <button onclick="addEvent('{{ event.name }}')">
+            {{ event.name }}<br>
+            {{ event.count }}<br>
+            {% timezone "America/Los_Angeles" %}
+            {{ event.latest|date:"N j, Y" }}<br>
+            {{ event.latest|time:"g:i a" }}</p>
+            {% endtimezone %}
+            </button>
+        </div>
     {% empty %}
         <p>No events yet.</p>
     {% endfor %}
-</tr></table>
 {% else %}
     <p>No events yet.</p>
 {% endif %}
-
-<input type="text" id="new_event_name" placeholder="Event name">
-<button onclick="addEvent()">Add Event</button>
-
-<script>
-function addEvent() {
-    const name = document.getElementById("new_event_name").value;
-    fetch(`/events/${name}/`, { method: "PUT" })
-        .then(r => r.json())
-        .then(data => {
-            console.log(data);
-            location.reload();
-        });
-}
-</script>
+<div class="oneevent">
+    <button onclick="newEvent()">
+    <input type="text" id="new_event_name" placeholder="Event name">
+    <br>Add Event
+    </button>
+</div>
+</div>
 
 {% endblock %}

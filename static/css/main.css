@@ -20,7 +20,30 @@ header {
 }
 
 table {
-  border: 1px solid #333;
+    border: 1px solid #333;
+}
+
+.events {
+    display: grid;
+    grid-template-columns: max-content max-content max-content;
+}
+
+.oneevent {
+    text-align: center;
+    padding: 20px;
+}
+
+.oneevent button {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 12px 20px;
+    cursor: pointer;
+}
+
+.oneevent button:hover {
+    background-color: #3a3a3a;
 }
 
 nav a {
