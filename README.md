@@ -1,4 +1,4 @@
-# Django Events
+# Jazz Events
 
 A simple event tracking app. It lets me track recurring IRL events over time. As a simple example, it will let me answer questions like "when's the last time I bought shampoo" or "how often do I buy shampoo," and easily track when I do 
 
