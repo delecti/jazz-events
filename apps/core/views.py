@@ -12,8 +12,7 @@ def home(request):
     # names = Event.objects.values_list("name", flat=True).distinct()
     events = (Event.objects
                 .values("name")
-                .annotate(count=Count("id"), latest=Max("created_at"))
-                .order_by("-latest"))
+                .annotate(count=Count("id"), latest=Max("created_at")))
     return render(request, "core/home.html", {"events": events})
 
 
@@ -27,8 +26,7 @@ class EventView(APIView):
         if name is None:
             events = (Event.objects
                 .values("name")
-                .annotate(count=Count("id"), latest=Max("created_at"))
-                .order_by("-latest"))
+                .annotate(count=Count("id"), latest=Max("created_at")))
             return Response(events)
         else:
             events = Event.objects.filter(name=name)
