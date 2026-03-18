@@ -11,12 +11,13 @@
     {% for event in events %}
         <div class="oneevent">
             <button onclick="addEvent('{{ event.name }}')">
-            {{ event.name }}<br>
-            {{ event.count }}<br>
-            {% timezone "America/Los_Angeles" %}
-            {{ event.latest|date:"N j, Y" }}<br>
-            {{ event.latest|time:"g:i a" }}</p>
-            {% endtimezone %}
+                <p>{{ event.name }}</p>
+                <p>{{ event.since_days|floatformat:1 }} days ago</p>
+                <p>{{ event.count }} times
+                {% if event.has_recurrence %}
+                every {{ event.recurrence|floatformat:1 }} days
+                {% endif %}
+                </p>
             </button>
         </div>
     {% empty %}
