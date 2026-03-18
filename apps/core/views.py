@@ -1,4 +1,5 @@
-from django.db.models import Count, Max
+from django.db.models import Count, Min, Max, ExpressionWrapper, DurationField
+from django.db.models.functions import Now
 from .models import Event
 from django.shortcuts import render
 from rest_framework import status
@@ -12,7 +13,20 @@ def home(request):
     # names = Event.objects.values_list("name", flat=True).distinct()
     events = (Event.objects
                 .values("name")
-                .annotate(count=Count("id"), latest=Max("created_at")))
+                .annotate(
+                    count=Count("id"),
+                    since=ExpressionWrapper(Now() - Max("created_at"), output_field=DurationField()),
+                    delta=ExpressionWrapper(Max("created_at") - Min("created_at"), output_field=DurationField())
+                    ))
+    for e in events:
+        if e["since"]:
+            e["since_days"] = e["since"].total_seconds() / 86400
+        if e["count"] > 1:
+            e["recurrence"] = e["delta"].total_seconds() / (86400 * (e["count"] - 1))
+            e["has_recurrence"] = True
+        else:
+            e["recurrence"] = ""
+            e["has_recurrence"] = False
     return render(request, "core/home.html", {"events": events})
 
 
@@ -26,7 +40,11 @@ class EventView(APIView):
         if name is None:
             events = (Event.objects
                 .values("name")
-                .annotate(count=Count("id"), latest=Max("created_at")))
+                .annotate(
+                    count=Count("id"),
+                    since=ExpressionWrapper(Now() - Max("created_at"), output_field=DurationField()),
+                    delta=ExpressionWrapper((Max("created_at") - Min("created_at")) / (Count("id")), output_field=DurationField())
+                    ))
             return Response(events)
         else:
             events = Event.objects.filter(name=name)
